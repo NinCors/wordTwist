@@ -3,12 +3,12 @@
 program wordTwist;
 	uses
 		Sysutils;
-	const
-		dictionary = 'dictionary.txt';
+	const	
+		test = 'test.txt';
 	var
 		sixLetter_count : integer;
 		sixLetter_word : string[6];
-		dictionary_count : integer;
+		matched_words : array of string;
 
 	function shuffleLetter( wordd:string ) : string;
 		var
@@ -35,7 +35,6 @@ program wordTwist;
 	function readSixLetter: string;
 		const
 			sixLetter = 'sixLetters.txt';
-			test = 'test.txt';
 		var
 			words : array of string[6];
 			tfIn: TextFile;
@@ -72,23 +71,83 @@ program wordTwist;
 			end;
 		end;			
 	
-	
-	
-	{
-	
-	function readDictionary( randWord : string): array of string; 
 
-	function checkSub( randWord : string, dicWord : string) : boolean;
+	function checkSub( randWord : string;  dicWord : string) : boolean;
+		var
+			len : integer;
+			ps : integer; //position
+		begin	
+			checkSub := true;
+			len := length(dicWord);
+			repeat
+				ps := pos(dicWord[len],randWord);
 
+				writeln('Len is ', len);
+				writeln('Dic char is ', dicWord[len]);
+				writeln('Rand word is ', randWord);
+				writeln('position is ', ps);
+
+				if ps = 0 then
+					checkSub := false;
+				{mark the ps is readed}
+				randWord[ps] := '1';
+				len := len - 1;
+			until(len < 1)
+		end;
+
+
+	function readDictionary( randWord : string):integer; 
+		const
+			test = 'test.txt';
+			dictionary = 'dictionary.txt';
+		var
+			w: string[6];
+			match_count : integer;
+			tfIn: TextFile;
+			randNum : integer;
+
+		begin
+			match_count := 0;
+
+			writeln('Read dictionary file ');
+			writeln('--------------------');
+		
+			AssignFile(tfIn,test);
+
+			try
+				reset(tfIn);
+				while not eof(tfIn) do
+					begin
+						readln(tfIn, w);
+
+						{if this word is sub word of randWord, 
+						then add it to matched_word array}
+						if checkSub(w,randWord) then 
+							begin
+								SetLength(matched_words, match_count+1);
+								matched_words[match_count] := w;
+								match_count := match_count + 1;											   			   end;	
+					end;
+				{ Close the file }
+				CloseFile(tfIn);
+			except
+				on E: EInOutError do
+					writeln('File handling error occurred. Details: ', E.Message);
+			end;
+		end;		
+{
 	function game: boolean;
 
 	}
 	
 	begin
+		{
 		Randomize;
 		sixLetter_count := 0;
 		sixLetter_word := readSixLetter;
 		writeln('The randomed six letter word is ', sixLetter_word);
+		}
+		writeln(checkSub('scared','scread'));
 
 	end.
 
