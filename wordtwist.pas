@@ -5,11 +5,22 @@ program wordTwist;
 		Sysutils;
 	const	
 		test = 'test.txt';
+		test_dic = 'test_dic.txt';
 	var
 		sixLetter_count : integer;
 		sixLetter_word : string[6];
+
 		matched_count : integer;
 		matched_words : array of string;
+
+		input_word : string;
+
+		guess_count : integer;{how many times user guesses}
+		guess_words : array of string; {the word lists that user guesses}
+		guess_right_count : integer; {how many times user guess right}
+		guess_sixLetter_count : integer;{how many times user get the real word that uses all 6 letters}
+		
+		game_end : boolean;
 
 	function shuffleLetter( wordd:string ) : string;
 		var
@@ -28,8 +39,6 @@ program wordTwist;
 				newWord[rand] := wordd[count];
 				count := count + 1;
 			until(count > 6);
-			writeln('The original word is ', wordd);
-			writeln('After : ', newWord);
 			shuffleLetter := newWord;
 		end;
 
@@ -42,10 +51,7 @@ program wordTwist;
 			randNum : integer;
 
 		begin
-			writeln('Read sixletter file ');
-			writeln('--------------------');
-		
-			AssignFile(tfIn,test);
+			AssignFile(tfIn,sixLetter);
 
 			try
 				reset(tfIn);
@@ -62,7 +68,6 @@ program wordTwist;
 
 				{ randomly choose the sixletter word }
 				randNum := random(sixLetter_count);
-				writeln('Randomed index is ', randNum);
 				
 				{ return the random choosed six character word }
 				readSixLetter := shuffleLetter(words[randNum]);
@@ -93,9 +98,14 @@ program wordTwist;
 				repeat
 					ps := pos(dicWord[len],randWord);
 					if ps = 0 then
-						checkSub := false;
+						begin
+							checkSub := false;
+						end
 					{mark the ps is readed}
-					randWord[ps] := '1';
+					else	
+						begin
+							randWord[ps] := '1';
+						end;
 					len := len - 1;
 				until(len < 1);
 			except
@@ -107,7 +117,6 @@ program wordTwist;
 
 	function readDictionary( randWord : string):integer; 
 		const
-			test_dic = 'test_dic.txt';
 			dictionary = 'dictionary.txt';
 		var
 			w: string[6];
@@ -116,26 +125,24 @@ program wordTwist;
 
 		begin
 			match_count := 0;
-
-			writeln('Read dictionary file ');
-			writeln('--------------------');
-		
-			AssignFile(tfIn1,test_dic);
+			AssignFile(tfIn1,dictionary);
 
 			try
 				reset(tfIn1);
 				while not eof(tfIn1) do
 					begin
 						readln(tfIn1, w);
-						writeln(w,' ',randWord);
 						{if this word is sub word of randWord, 
 						then add it to matched_word array}
 						if checkSub(randWord,w) then 
 							begin
-								writeln('1');
-								SetLength(matched_words, match_count+1);
-								matched_words[match_count] := w;
-								match_count := match_count + 1;
+								try
+									SetLength(matched_words, match_count+1);
+									matched_words[match_count] := w;
+									match_count := match_count + 1;
+								except
+									writeln('Something wrong here.');
+								end;
 							end;
 					end;
 				{ Close the file }
@@ -146,24 +153,126 @@ program wordTwist;
 					writeln('File handling error occurred. Details: ', E.Message);
 			end;
 		end;		
-{
 
+	{check if inputword matchs with a word in some list}
+	function match( inputWord : string ; words: array of string): boolean;
+		var
+			len: integer;
+			i: integer;
+		begin
+			len := length(words);
+			match := false;
+			for i := 0 to len-1 do
+				begin
+					{writeln('Input word is ', inputWord, ' list word is ', words[i]);}
+					if inputWord = words[i] then
+						match := true;
+				end;
+		end;
+		
+	{
+		check the input words suing only the six letters provided or not
+			true: didn't use six letter provided
+			false: use the six letter provided 
 	}
+	function checkSixLetter( inputWord : string ; randWord: string): boolean;
+		var 
+			len: integer;
+			ps: integer;
+			i: integer;
+		begin
+			checkSixLetter := false;
+			len := length(inputWord);
+			for i := 1 to len do
+				begin
+					{writeln('input word char is ', inputWord[i],' randword is ', randWord);}
+					ps := pos(inputWord[i], randWord);
+					{writeln('The position is ', ps);}
+					if ps = 0 then
+					    checkSixLetter := true;
+				end;
+		end;
+
+	{print matched_words list}
+	procedure cheat( len: integer );
+		var
+			i:integer;
+		begin
+			for i := 0 to len-1 do
+				try
+					writeln(matched_words[i]);
+				except
+					writeln('Unexpected error');
+				end;
+		end;
 	
+	function checkWin : boolean;
+		begin
+			checkWin := false;
+			if (guess_right_count > matched_count/2) and (guess_sixLetter_count >= 1) then
+				begin
+					writeln('You win!!!!!!!!!!!');
+					checkWin := true;
+				end;
+		end;
+
+
 	begin
 		Randomize;
+		game_end := false;
 		sixLetter_count := 0;
+		guess_count := 0;
+		guess_right_count := 0;
+		guess_sixLetter_count := 0;
+		
 		sixLetter_word := readSixLetter;
-		writeln('The randomed six letter word is ', sixLetter_word);
-		
 		matched_count := readDictionary(sixLetter_word);
-		writeln('matched words are ');
-				sixLetter_count := 0;
-		
-		sixLetter_count := length(matched_words);
+	
+		{main game part}
+		writeln('Hello! Welcome to play word twist game! ');	
 		repeat
-			writeln(matched_words[sixLetter_count]);
-			sixLetter_count := sixLetter_count - 1;	
-		until(sixLetter_count = 0);
+			writeln(#13#10);
+			writeln('The randomed six letter word is ', sixLetter_word);
+			writeln('The possible solution num is ', matched_count);
+			writeln('You guess right num : ', guess_right_count);
+			writeln('Please input the possible word : ');
+			readln(input_word);
+			
+			if input_word = 'qqq' then
+				begin
+					writeln('Byebye, see you later!');
+					game_end := true;
+				end
+			else if input_word = '/cheat' then
+				begin
+					cheat(matched_count);
+				end
+			else if checkSixLetter(input_word, sixLetter_word) then
+				begin
+					writeln('You should use the provided letter!');
+				end
+			else if match(input_word, guess_words) then
+				begin
+					writeln('You can not input same word !');
+				end
+			else if match(input_word, matched_words) then
+				begin
+					writeln('Congratulation! You are right! ');
+					SetLength(guess_words, guess_count + 1);
+					guess_words[guess_count] := input_word;
+					guess_count := guess_count + 1;
+					guess_right_count := guess_right_count + 1;
+					if length(input_word) = 6 then
+						guess_sixLetter_count := guess_sixLetter_count + 1;
+				end
+			else
+				begin
+					writeln('Sorry you are wrong, plz input again! ');
+					SetLength(guess_words, guess_count + 1);
+					guess_words[guess_count] := input_word;
+					guess_count := guess_count + 1;
+				end;
+			game_end := checkWin;
+		until(game_end);
 	end.
 
