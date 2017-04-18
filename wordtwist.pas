@@ -1,3 +1,5 @@
+{Author: Chiyu Cheng}
+
 {$mode Delphi}
 
 program wordTwist;
@@ -204,6 +206,7 @@ program wordTwist;
 				except
 					writeln('Unexpected error');
 				end;
+			writeln('Well, I knew you will cheat, lol');
 		end;
 	
 	function checkWin : boolean;
@@ -229,10 +232,10 @@ program wordTwist;
 		matched_count := readDictionary(sixLetter_word);
 	
 		{main game part}
-		writeln('Hello! Welcome to play word twist game! ');	
+		writeln(#13#10,'Hello! Welcome to play word twist game! ');
+		writeln('Be nice, plz do not use /cheat command to look at the solution');	
 		repeat
-			writeln(#13#10);
-			writeln('The randomed six letter word is ', sixLetter_word);
+			writeln(#13#10,'The randomed six letter word is ', sixLetter_word);
 			writeln('The possible solution num is ', matched_count);
 			writeln('You guess right num : ', guess_right_count);
 			writeln('Please input the possible word : ');
