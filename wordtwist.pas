@@ -5,6 +5,8 @@
 program wordTwist;
 	uses
 		Sysutils;
+	type
+		arrayString = array of string;
 	const	
 		test = 'test.txt';
 		test_dic = 'test_dic.txt';
@@ -13,12 +15,12 @@ program wordTwist;
 		sixLetter_word : string[6];
 
 		matched_count : integer;
-		matched_words : array of string;
+		matched_words : arrayString;
 
 		input_word : string;
 
 		guess_count : integer;{how many times user guesses}
-		guess_words : array of string; {the word lists that user guesses}
+		guess_words : arrayString; {the word lists that user guesses}
 		guess_right_count : integer; {how many times user guess right}
 		guess_sixLetter_count : integer;{how many times user get the real word that uses all 6 letters}
 		
@@ -117,12 +119,13 @@ program wordTwist;
 		end;
 
 
-	function readDictionary( randWord : string):integer; 
+	function readDictionary( randWord : string):arrayString; 
 		const
 			dictionary = 'dictionary.txt';
 		var
 			w: string[6];
 			match_count : integer;
+			match_words : arrayString;
 			tfIn1: TextFile;
 
 		begin
@@ -139,8 +142,8 @@ program wordTwist;
 						if checkSub(randWord,w) then 
 							begin
 								try
-									SetLength(matched_words, match_count+1);
-									matched_words[match_count] := w;
+									SetLength(match_words, match_count+1);
+									match_words[match_count] := w;
 									match_count := match_count + 1;
 								except
 									writeln('Something wrong here.');
@@ -148,7 +151,7 @@ program wordTwist;
 							end;
 					end;
 				{ Close the file }
-				readDictionary := match_count;
+				readDictionary := match_words;
 				CloseFile(tfIn1);
 			except
 				on E: EInOutError do
@@ -157,7 +160,7 @@ program wordTwist;
 		end;		
 
 	{check if inputword matchs with a word in some list}
-	function match( inputWord : string ; words: array of string): boolean;
+	function match( inputWord : string ; words: arrayString): boolean;
 		var
 			len: integer;
 			i: integer;
@@ -195,20 +198,46 @@ program wordTwist;
 				end;
 		end;
 
-	{print matched_words list}
-	procedure cheat( len: integer );
+	{print list}
+	procedure cheat( words : arrayString );
 		var
 			i:integer;
+			len: integer;
 		begin
+			len := length(words);
 			for i := 0 to len-1 do
 				try
-					writeln(matched_words[i]);
+					writeln(words[i]);
 				except
 					writeln('Unexpected error');
 				end;
-			writeln('Well, I knew you will cheat, lol');
 		end;
 	
+	{sort matched list}
+	function sort( words : arrayString ): arrayString;
+		var
+			i:integer;
+			count:integer;
+			len: integer;
+			tmp: string;
+
+		begin
+			len:= length(words);
+			count := 0;
+			for i:= 1 to len-1 do
+				begin
+				count := i;	
+				while (count > 0) and (length(words[count]) > length(words[count-1])) and (words[count][1] = words[count-1][1]) do
+					begin
+					tmp := words[count];
+					words[count] := words[count-1];
+					words[count-1] := tmp;
+					count := count - 1;
+					end;
+				end;
+			sort := words;
+		end;
+
 	function checkWin : boolean;
 		begin
 			checkWin := false;
@@ -229,8 +258,10 @@ program wordTwist;
 		guess_sixLetter_count := 0;
 		
 		sixLetter_word := readSixLetter;
-		matched_count := readDictionary(sixLetter_word);
-	
+		matched_words := readDictionary(sixLetter_word);
+		matched_count := length(matched_words);
+		sort(matched_words);
+
 		{main game part}
 		writeln(#13#10,'Hello! Welcome to play word twist game! ');
 		writeln('Be nice, plz do not use /cheat command to look at the solution');	
@@ -248,7 +279,7 @@ program wordTwist;
 				end
 			else if input_word = '/cheat' then
 				begin
-					cheat(matched_count);
+					cheat(matched_words);
 				end
 			else if checkSixLetter(input_word, sixLetter_word) then
 				begin
