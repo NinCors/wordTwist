@@ -16,7 +16,8 @@ program wordTwist;
 
 		matched_count : integer;
 		matched_words : arrayString;
-
+		underscore_words: arrayString;	
+	
 		input_word : string;
 
 		guess_count : integer;{how many times user guesses}
@@ -171,7 +172,10 @@ program wordTwist;
 				begin
 					{writeln('Input word is ', inputWord, ' list word is ', words[i]);}
 					if inputWord = words[i] then
+						begin
+						underscore_words[i] := inputWord;
 						match := true;
+						end;
 				end;
 		end;
 		
@@ -199,7 +203,7 @@ program wordTwist;
 		end;
 
 	{print list}
-	procedure cheat( words : arrayString );
+	procedure print( words : arrayString );
 		var
 			i:integer;
 			len: integer;
@@ -213,6 +217,28 @@ program wordTwist;
 				end;
 		end;
 	
+	function underScore( words: arrayString ): arrayString;
+		var
+			i: integer;
+			w: integer;
+			len: integer;
+			tmp: string;
+			word1: arrayString;
+		begin
+			len := length(words);
+			SetLength(word1, len);
+			for i:= 0 to len-1 do
+				begin
+					tmp := '';
+					for w:= 1 to length(words[i]) do
+						tmp := tmp + '-';
+					word1[i] := tmp;
+				end;
+			underScore := word1;
+		end;
+
+
+
 	{sort matched list}
 	function sort( words : arrayString ): arrayString;
 		var
@@ -250,6 +276,7 @@ program wordTwist;
 
 
 	begin
+		{Initial the variables}
 		Randomize;
 		game_end := false;
 		sixLetter_count := 0;
@@ -257,11 +284,16 @@ program wordTwist;
 		guess_right_count := 0;
 		guess_sixLetter_count := 0;
 		
+		{get the random six letter words from sixletter file}
 		sixLetter_word := readSixLetter;
+		{get possible matched words from dictionary}
 		matched_words := readDictionary(sixLetter_word);
 		matched_count := length(matched_words);
+		{sort matched words list by length and letter}
 		sort(matched_words);
-
+		{get underscore version of matched_words}
+		underscore_words := underScore(matched_words);
+		
 		{main game part}
 		writeln(#13#10,'Hello! Welcome to play word twist game! ');
 		writeln('Be nice, plz do not use /cheat command to look at the solution');	
@@ -269,6 +301,8 @@ program wordTwist;
 			writeln(#13#10,'The randomed six letter word is ', sixLetter_word);
 			writeln('The possible solution num is ', matched_count);
 			writeln('You guess right num : ', guess_right_count);
+			writeln('Clues: ');
+			print(underscore_words);
 			writeln('Please input the possible word : ');
 			readln(input_word);
 			
@@ -279,7 +313,7 @@ program wordTwist;
 				end
 			else if input_word = '/cheat' then
 				begin
-					cheat(matched_words);
+					print(matched_words);
 				end
 			else if checkSixLetter(input_word, sixLetter_word) then
 				begin
@@ -307,6 +341,7 @@ program wordTwist;
 					guess_count := guess_count + 1;
 				end;
 			game_end := checkWin;
+			writeln(#13#10,'-------------------------------------------------------------');
 		until(game_end);
 	end.
 
